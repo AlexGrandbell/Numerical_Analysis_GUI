@@ -2801,7 +2801,7 @@ public class Main extends JFrame {
                     }
                     n.add(new Node(x, y));
                 }
-                for (int i = 0; i <= num; ++i) {
+                for (int i = 0; i < num; ++i) {
                     result.append(String.format("x%-3d= %-10.4f", i, n.get(i).x));
                     result.append(String.format("y%-3d= %-10.4f\n", i, n.get(i).y));
                 }
