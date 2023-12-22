@@ -20,7 +20,7 @@ public class Main extends JFrame {
     private CardLayout card;
     private JTabbedPane tp1, tp2, tp3, tp4;//主面板
     private ImageIcon aboutPNG, helpPNG, errorPNG, successPNG, clockPNG, questPNG, smallReadyPNG, smallWrongPNG,smallSucceedPNG,smallErrorPNG;
-    private JTextArea a1_1,a1_2,a2_1,a2_2,a2_3,a2_4,a2_5,a3_1,a3_2,a3_3,a3_4,a3_5,a3_6,a3_7,a4_1,a4_2,a4_3;
+    private JTextArea a1_1,a1_2,a2_1,a2_2,a2_3,a2_4,a2_5,a3_1,a3_2,a3_3,a3_4,a3_5,a3_6,a3_7,a4_1,a4_2,a4_3,a4_4,a4_5,a4_6;
     private JTextField t2_5foot,t2_5nx1,t2_5nx2,t2_5nx3,t2_5nx4;
     private Color successColor,errorColor,wrongColor,readyColor;
     private Queue<BottomInfo> infoQueue;
@@ -43,6 +43,9 @@ public class Main extends JFrame {
     Jacobi jacobi;
     Gauss_Seidel gaussSeidel;
     SOR sor;
+    Jordan jordan;
+    Gauss gauss;
+    MainGauss mainGauss;
 
 
     Main(){
@@ -109,7 +112,9 @@ public class Main extends JFrame {
         jacobi = new Jacobi();
         gaussSeidel = new Gauss_Seidel();
         sor = new SOR();
-
+        jordan = new Jordan();
+        gauss = new Gauss();
+        mainGauss = new MainGauss();
 
         //底部信息更新
         rereadyBottomInfoThread = new RereadyBottomInfoThread();
@@ -388,6 +393,9 @@ public class Main extends JFrame {
         initJacobi();
         initGauss_Seidel();
         initSOR();
+        initJordan();
+        initGauss();
+        initMainGauss();
 
         // 将选项卡面板添加到卡片面板中
         p.add(tp1, "tp1");
@@ -2268,6 +2276,354 @@ public class Main extends JFrame {
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         p4_3.add(p4_3show, gbc);
     }
+    //4-约当消去法GUI初始化
+    void initJordan(){
+        JPanel p4_4 = new JPanel();
+        p4_4.setLayout(new GridBagLayout());
+        tp4.add("约当消去法",p4_4);
+        //函数提示
+        JPanel p4_4Info = new JPanel();
+        p4_4Info.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        p4_4Info.add(new JLabel("本环节将对自定义输入的线性方程组进行约当消去法求解"));
+        //输入未知数数量
+        JPanel p4_4n = new JPanel();
+        p4_4n.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        p4_4n.add(new JLabel("请输入未知数数量n:"));
+        JTextField t4_4n  = new JTextField(6);
+        t4_4n.getDocument().addUndoableEditListener(undoManager);
+        p4_4n.add(t4_4n);
+        //输入增广矩阵提示
+        JPanel p4_4mInfo = new JPanel();
+        p4_4mInfo.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        p4_4mInfo.add(new JLabel("请输入增广矩阵:"));
+        //输入增广矩阵
+        JPanel p4_4M = new JPanel(new BorderLayout());
+        JTextArea a4_41  = new JTextArea();
+        JScrollPane scrollPane1 = new JScrollPane(a4_41);
+        a4_41.getDocument().addUndoableEditListener(undoManager);
+        p4_4M.add(scrollPane1);
+        //按钮群
+        JPanel p4_4Buttons = new JPanel();
+        JButton b4_4add = new JButton("输入");
+        b4_4add.addActionListener(event->{
+            try{
+                int n = Integer.parseInt(t4_4n.getText());
+                String m = a4_41.getText();
+                jordan.inputCoefficientMatrix(n,m);
+            } catch (NumberFormatException | InputMismatchException e){
+                tempUpdateBottomInfo("请输入有效数据",smallErrorPNG,errorColor,3);
+            } catch (IllegalArgumentException e){
+                tempUpdateBottomInfo(e.getMessage(), smallErrorPNG, errorColor, 3);
+            }
+        });
+        JButton b4_4out = new JButton("输出方程组");
+        b4_4out.addActionListener(event-> {
+            try {
+                jordan.printCoefficientMatrix();
+            } catch (IllegalArgumentException e) {
+                tempUpdateBottomInfo(e.getMessage(), smallErrorPNG, errorColor, 3);
+            }
+        });
+        JButton b4_4cal = new JButton("计算");
+        b4_4cal.setForeground(Color.BLUE);
+        b4_4cal.addActionListener(event->{
+            try {
+                permanentUpdateBottomInfo("计算中...",smallReadyPNG,readyColor);
+                jordan.calculate();
+            } catch (NumberFormatException e) {
+                tempUpdateBottomInfo("请输入有效数据",smallErrorPNG,errorColor,3);
+            } catch (IllegalArgumentException e){
+                tempUpdateBottomInfo(e.getMessage(),smallErrorPNG,errorColor,3);
+            }
+        });
+        JButton b4_4reset = new JButton("重置输入");
+        b4_4reset.addActionListener(event->{
+            t4_4n.setText("");
+            a4_41.setText("");
+            tempUpdateBottomInfo("已重置",smallSucceedPNG,successColor,2);
+        });
+        JButton b4_4clear = new JButton("清空下方显示");
+        b4_4clear.setForeground(Color.red);
+        b4_4clear.addActionListener(event->{
+            a4_4.setText("");
+            tempUpdateBottomInfo("已清空",smallSucceedPNG,successColor,2);
+        });
+        JButton b4_4help = new JButton("帮助");
+        b4_4help.addActionListener(event-> JOptionPane.showMessageDialog(Main.this,
+                "介绍:\n约当消去法是常用的线性方程组解法。\n"
+                        +"\n您的操作:\n你需要在该界面中输入未知数n以及其增广矩阵。\n先按下添加按钮以添加矩阵数据，再按下计算按钮后程序会给出所求解的结果。\n"
+                        +"\n提示:\n本程序可以对你输入的线性方程组进行求解，但是只能解非奇异矩阵。\n增广矩阵是系数矩阵加上常数b矩阵。\n非奇异矩阵为是有唯一解或解为0的线性方程组。",
+                "约当消去法帮助",JOptionPane.INFORMATION_MESSAGE,helpPNG));
+        p4_4Buttons.add(b4_4add);
+        p4_4Buttons.add(b4_4out);
+        p4_4Buttons.add(b4_4cal);
+        p4_4Buttons.add(b4_4reset);
+        p4_4Buttons.add(b4_4clear);
+        p4_4Buttons.add(b4_4help);
+        //显示区域
+        JPanel p4_4show = new JPanel(new BorderLayout());
+        a4_4 = new JTextArea();
+        a4_4.setEditable(false);
+        JScrollPane scrollPane2 = new JScrollPane(a4_4);
+        p4_4show.add(scrollPane2);
+
+        // 使用GridBagLayout进行布局
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridy = 0;
+        p4_4.add(p4_4Info, gbc);
+        gbc.gridy = 1;
+        p4_4.add(p4_4n, gbc);
+        gbc.gridy = 2;
+        p4_4.add(p4_4mInfo, gbc);
+        gbc.gridy = 3;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        p4_4.add(p4_4M, gbc);
+        gbc.weighty = 0;
+        gbc.gridy = 4;
+        p4_4.add(p4_4Buttons, gbc);
+        gbc.gridy = 5;
+        gbc.weighty = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        p4_4.add(p4_4show, gbc);
+    }
+    //4-高斯消去法GUI初始化
+    void initGauss(){
+        JPanel p4_5 = new JPanel();
+        p4_5.setLayout(new GridBagLayout());
+        tp4.add("高斯消去法",p4_5);
+        //函数提示
+        JPanel p4_5Info = new JPanel();
+        p4_5Info.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        p4_5Info.add(new JLabel("本环节将对自定义输入的线性方程组进行高斯消去法求解"));
+        //输入未知数数量
+        JPanel p4_5n = new JPanel();
+        p4_5n.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        p4_5n.add(new JLabel("请输入未知数数量n:"));
+        JTextField t4_5n  = new JTextField(6);
+        t4_5n.getDocument().addUndoableEditListener(undoManager);
+        p4_5n.add(t4_5n);
+        //输入增广矩阵提示
+        JPanel p4_5mInfo = new JPanel();
+        p4_5mInfo.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        p4_5mInfo.add(new JLabel("请输入增广矩阵:"));
+        //输入增广矩阵
+        JPanel p4_5M = new JPanel(new BorderLayout());
+        JTextArea a4_51  = new JTextArea();
+        JScrollPane scrollPane1 = new JScrollPane(a4_51);
+        a4_51.getDocument().addUndoableEditListener(undoManager);
+        p4_5M.add(scrollPane1);
+        //按钮群
+        JPanel p4_5Buttons = new JPanel();
+        JButton b4_5add = new JButton("输入");
+        b4_5add.addActionListener(event->{
+            try{
+                int n = Integer.parseInt(t4_5n.getText());
+                String m = a4_51.getText();
+                gauss.inputCoefficientMatrix(n,m);
+            } catch (NumberFormatException | InputMismatchException e){
+                tempUpdateBottomInfo("请输入有效数据",smallErrorPNG,errorColor,3);
+            } catch (IllegalArgumentException e){
+                tempUpdateBottomInfo(e.getMessage(), smallErrorPNG, errorColor, 3);
+            }
+        });
+        JButton b4_5out = new JButton("输出方程组");
+        b4_5out.addActionListener(event-> {
+            try {
+                gauss.printCoefficientMatrix();
+            }catch (IllegalArgumentException e){
+                tempUpdateBottomInfo(e.getMessage(), smallErrorPNG, errorColor, 3);
+            }
+        });
+        JButton b4_5cal = new JButton("计算");
+        b4_5cal.setForeground(Color.BLUE);
+        b4_5cal.addActionListener(event->{
+            try {
+                permanentUpdateBottomInfo("计算中...",smallReadyPNG,readyColor);
+                gauss.calculate();
+            } catch (NumberFormatException e) {
+                tempUpdateBottomInfo("请输入有效数据",smallErrorPNG,errorColor,3);
+            } catch (IllegalArgumentException e){
+                tempUpdateBottomInfo(e.getMessage(),smallErrorPNG,errorColor,3);
+            }
+        });
+        JButton b4_5reset = new JButton("重置输入");
+        b4_5reset.addActionListener(event->{
+            t4_5n.setText("");
+            a4_51.setText("");
+            tempUpdateBottomInfo("已重置",smallSucceedPNG,successColor,2);
+        });
+        JButton b4_5clear = new JButton("清空下方显示");
+        b4_5clear.setForeground(Color.red);
+        b4_5clear.addActionListener(event->{
+            a4_5.setText("");
+            tempUpdateBottomInfo("已清空",smallSucceedPNG,successColor,2);
+        });
+        JButton b4_5help = new JButton("帮助");
+        b4_5help.addActionListener(event-> JOptionPane.showMessageDialog(Main.this,
+                "介绍:\n高斯消去法是对约当消去法的优化，可以减少计算次数。\n"
+                        +"\n您的操作:\n你需要在该界面中输入未知数n以及其增广矩阵。\n先按下添加按钮以添加矩阵数据，再按下计算按钮后程序会给出所求解的结果。\n"
+                        +"\n提示:\n本程序可以对你输入的线性方程组进行求解，但是只能解非奇异矩阵。\n增广矩阵是系数矩阵加上常数b矩阵。\n非奇异矩阵为是有唯一解或解为0的线性方程组。",
+                "高斯消去法帮助",JOptionPane.INFORMATION_MESSAGE,helpPNG));
+        p4_5Buttons.add(b4_5add);
+        p4_5Buttons.add(b4_5out);
+        p4_5Buttons.add(b4_5cal);
+        p4_5Buttons.add(b4_5reset);
+        p4_5Buttons.add(b4_5clear);
+        p4_5Buttons.add(b4_5help);
+        //显示区域
+        JPanel p4_5show = new JPanel(new BorderLayout());
+        a4_5 = new JTextArea();
+        a4_5.setEditable(false);
+        JScrollPane scrollPane2 = new JScrollPane(a4_5);
+        p4_5show.add(scrollPane2);
+
+        // 使用GridBagLayout进行布局
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridy = 0;
+        p4_5.add(p4_5Info, gbc);
+        gbc.gridy = 1;
+        p4_5.add(p4_5n, gbc);
+        gbc.gridy = 2;
+        p4_5.add(p4_5mInfo, gbc);
+        gbc.gridy = 3;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        p4_5.add(p4_5M, gbc);
+        gbc.weighty = 0;
+        gbc.gridy = 4;
+        p4_5.add(p4_5Buttons, gbc);
+        gbc.gridy = 5;
+        gbc.weighty = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        p4_5.add(p4_5show, gbc);
+    }
+    //列主元高斯消去法GUI初始化
+    void initMainGauss(){
+        JPanel p4_6 = new JPanel();
+        p4_6.setLayout(new GridBagLayout());
+        tp4.add("列主元高斯消去法",p4_6);
+        //函数提示
+        JPanel p4_6Info = new JPanel();
+        p4_6Info.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        p4_6Info.add(new JLabel("本环节将对自定义输入的线性方程组进行列主元高斯消去法求解"));
+        //输入未知数数量
+        JPanel p4_6n = new JPanel();
+        p4_6n.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        p4_6n.add(new JLabel("请输入未知数数量n:"));
+        JTextField t4_6n  = new JTextField(6);
+        t4_6n.getDocument().addUndoableEditListener(undoManager);
+        p4_6n.add(t4_6n);
+        //输入增广矩阵提示
+        JPanel p4_6mInfo = new JPanel();
+        p4_6mInfo.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        p4_6mInfo.add(new JLabel("请输入增广矩阵:"));
+        //输入增广矩阵
+        JPanel p4_6M = new JPanel(new BorderLayout());
+        JTextArea a4_61  = new JTextArea();
+        JScrollPane scrollPane1 = new JScrollPane(a4_61);
+        a4_61.getDocument().addUndoableEditListener(undoManager);
+        p4_6M.add(scrollPane1);
+        //按钮群
+        JPanel p4_6Buttons = new JPanel();
+        JButton b4_6add = new JButton("输入");
+        b4_6add.addActionListener(event->{
+            try{
+                int n = Integer.parseInt(t4_6n.getText());
+                String m = a4_61.getText();
+                mainGauss.inputCoefficientMatrix(n,m);
+            } catch (NumberFormatException | InputMismatchException e){
+                tempUpdateBottomInfo("请输入有效数据",smallErrorPNG,errorColor,3);
+            } catch (IllegalArgumentException e){
+                tempUpdateBottomInfo(e.getMessage(), smallErrorPNG, errorColor, 3);
+            }
+        });
+        JButton b4_6out = new JButton("输出方程组");
+        b4_6out.addActionListener(event-> {
+            try {
+                mainGauss.printCoefficientMatrix();
+            } catch (IllegalArgumentException e) {
+                tempUpdateBottomInfo(e.getMessage(), smallErrorPNG, errorColor, 3);
+            }
+        });
+        JButton b4_6cal = new JButton("计算");
+        b4_6cal.setForeground(Color.BLUE);
+        b4_6cal.addActionListener(event->{
+            try {
+                permanentUpdateBottomInfo("计算中...",smallReadyPNG,readyColor);
+                mainGauss.calculate();
+            } catch (NumberFormatException e) {
+                tempUpdateBottomInfo("请输入有效数据",smallErrorPNG,errorColor,3);
+            } catch (IllegalArgumentException e){
+                tempUpdateBottomInfo(e.getMessage(),smallErrorPNG,errorColor,3);
+            }
+        });
+        JButton b4_6reset = new JButton("重置输入");
+        b4_6reset.addActionListener(event->{
+            t4_6n.setText("");
+            a4_61.setText("");
+            tempUpdateBottomInfo("已重置",smallSucceedPNG,successColor,2);
+        });
+        JButton b4_6clear = new JButton("清空下方显示");
+        b4_6clear.setForeground(Color.red);
+        b4_6clear.addActionListener(event->{
+            a4_6.setText("");
+            tempUpdateBottomInfo("已清空",smallSucceedPNG,successColor,2);
+        });
+        JButton b4_6help = new JButton("帮助");
+        b4_6help.addActionListener(event-> JOptionPane.showMessageDialog(Main.this,
+                "介绍:\n列主元高斯消去法是高斯消去法的优化，每次将最大值行提到顶端进行计算，能避免数值小引起的误差。\n"
+                        +"\n您的操作:\n你需要在该界面中输入未知数n以及其增广矩阵。\n先按下添加按钮以添加矩阵数据，再按下计算按钮后程序会给出所求解的结果。\n"
+                        +"\n提示:\n本程序可以对你输入的线性方程组进行求解，但是只能解非奇异矩阵。\n增广矩阵是系数矩阵加上常数b矩阵。\n非奇异矩阵为是有唯一解或解为0的线性方程组。",
+                "列主元高斯消去法帮助",JOptionPane.INFORMATION_MESSAGE,helpPNG));
+        p4_6Buttons.add(b4_6add);
+        p4_6Buttons.add(b4_6out);
+        p4_6Buttons.add(b4_6cal);
+        p4_6Buttons.add(b4_6reset);
+        p4_6Buttons.add(b4_6clear);
+        p4_6Buttons.add(b4_6help);
+        //显示区域
+        JPanel p4_6show = new JPanel(new BorderLayout());
+        a4_6 = new JTextArea();
+        a4_6.setEditable(false);
+        JScrollPane scrollPane2 = new JScrollPane(a4_6);
+        p4_6show.add(scrollPane2);
+
+        // 使用GridBagLayout进行布局
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridy = 0;
+        p4_6.add(p4_6Info, gbc);
+        gbc.gridy = 1;
+        p4_6.add(p4_6n, gbc);
+        gbc.gridy = 2;
+        p4_6.add(p4_6mInfo, gbc);
+        gbc.gridy = 3;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        p4_6.add(p4_6M, gbc);
+        gbc.weighty = 0;
+        gbc.gridy = 4;
+        p4_6.add(p4_6Buttons, gbc);
+        gbc.gridy = 5;
+        gbc.weighty = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        p4_6.add(p4_6show, gbc);
+    }
 
     //初始化底部信息栏目
     private void initBottomInfoPanel(){
@@ -3212,6 +3568,326 @@ public class Main extends JFrame {
             }
             a4_3.append("迭代次数过多，仍未达到要求精度，迭代失败。\n\n");
             tempUpdateBottomInfo("迭代失败",smallErrorPNG,errorColor,3);
+        }
+    }
+    //约当消去法
+    class Jordan {
+//        4 -1 0 -1 0 0 0
+//        -1 4 -1 0 -1 0 5
+//        0 -1 4 0 0 -1 0
+//        -1 0 0 4 -1 0 6
+//        0 -1 0 -1 4 -1 -2
+//        0 0 -1 0 -1 4 6
+        private List<List<Double>> coefficientMatrix;//增广矩阵
+        private int n;//未知数个数
+        public Jordan() {
+            coefficientMatrix = new ArrayList<>();
+        }
+        public void inputCoefficientMatrix(int n,String matrix){
+            List<List<Double>> tempCoefficientMatrix = new ArrayList<>();
+            Scanner scanner = new Scanner(matrix);
+            // 逐行读取输入的系数
+            for (int i = 0; i < n; i++) {
+                List<Double> row = new ArrayList<>();
+                // 逐列读取系数
+                for (int j = 0; j <= n; j++) {
+                    if (scanner.hasNextDouble()) {
+                        row.add(scanner.nextDouble());
+                    } else {
+                        throw new IllegalArgumentException("输入数据不足或过多，构建失败，请重新输入");
+                    }
+                }
+                tempCoefficientMatrix.add(row);
+            }
+
+            // 检查是否还有多余的输入数据
+            if (scanner.hasNext()) {
+                throw new IllegalArgumentException("输入数据过多，请重新输入");
+            }
+
+            this.n = n;
+            coefficientMatrix = new ArrayList<>(tempCoefficientMatrix);
+            a4_4.append("增广矩阵输入成功,内容如下:\n");
+            printCoefficientMatrix();
+        }
+
+        private void printCoefficientMatrix() {
+            if (coefficientMatrix.isEmpty()){
+                throw new IllegalArgumentException("请先输入增广矩阵");
+            }
+            for (List<Double> row : coefficientMatrix) {
+                for (Double coefficient : row) {
+                    a4_4.append(String.format("%-10f ",coefficient));
+                }
+                a4_4.append("\n");
+            }
+        }
+
+        public void calculate(){
+            if (coefficientMatrix.isEmpty()){
+                throw new IllegalArgumentException("请先输入增广矩阵");
+            }
+            List<List<Double>> tempCoefficientMatrix = new ArrayList<>();
+            for (List<Double> innerList : coefficientMatrix) {
+                List<Double> innerCopy = new ArrayList<>(innerList);
+                tempCoefficientMatrix.add(innerCopy);
+            }
+            a4_4.append("开始计算...\n");
+            //有n-1行,n列
+            for (int i = 0; i < n; i++)
+            {
+                //判断是否非奇异矩阵
+                if (tempCoefficientMatrix.get(i).get(i) == 0) {
+                    a4_4.append("该矩阵为奇异矩阵，暂时无法求解\n");
+                    throw new IllegalArgumentException("求解失败");
+                }
+                //处理第i行一行
+                for (int j = i+1; j <= n; ++j) {
+                    tempCoefficientMatrix.get(i).set(j,(tempCoefficientMatrix.get(i).get(j)/tempCoefficientMatrix.get(i).get(i)));
+                }
+                tempCoefficientMatrix.get(i).set(i,1.0);
+                //处理其他
+                for (int i2 = 0; i2 < n; ++i2) {
+                    if (i2 == i){
+                        continue;
+                    }
+                    double kl = tempCoefficientMatrix.get(i2).get(i);
+                    for (int j2 = i; j2 <= n; ++j2) {
+                        tempCoefficientMatrix.get(i2).set(j2,(tempCoefficientMatrix.get(i2).get(j2)-tempCoefficientMatrix.get(i).get(j2)*kl));
+                    }
+                }
+            }
+            //判断是否为有唯一解，否则返回错误
+            if (tempCoefficientMatrix.get(n-1).get(n-1) == 0){
+                a4_4.append("该矩阵有无穷解，暂时无法求解\n");
+                throw new IllegalArgumentException("求解失败");
+            }
+            a4_4.append("计算结束，方程组的解为:\n");
+            for (int i = 0; i < n; i++) {
+                a4_4.append(String.format("x%d=%f\n",i+1,tempCoefficientMatrix.get(i).get(n)));
+            }
+            permanentUpdateBottomInfo("就绪",smallReadyPNG,readyColor);
+        }
+    }
+    //高斯消去法
+    class Gauss{
+        //4 -1 0 -1 0 0 0
+        //-1 4 -1 0 -1 0 5
+        //0 -1 4 0 0 -1 0
+        //-1 0 0 4 -1 0 6
+        //0 -1 0 -1 4 -1 -2
+        //0 0 -1 0 -1 4 6
+        private List<List<Double>> coefficientMatrix;//增广矩阵
+        private int n;//未知数个数
+        public Gauss() {
+            coefficientMatrix = new ArrayList<>();
+        }
+        public void inputCoefficientMatrix(int n,String matrix){
+            List<List<Double>> tempCoefficientMatrix = new ArrayList<>();
+            Scanner scanner = new Scanner(matrix);
+            // 逐行读取输入的系数
+            for (int i = 0; i < n; i++) {
+                List<Double> row = new ArrayList<>();
+                // 逐列读取系数
+                for (int j = 0; j <= n; j++) {
+                    if (scanner.hasNextDouble()) {
+                        row.add(scanner.nextDouble());
+                    } else {
+                        throw new IllegalArgumentException("输入数据不足或过多，构建失败，请重新输入");
+                    }
+                }
+                tempCoefficientMatrix.add(row);
+            }
+
+            // 检查是否还有多余的输入数据
+            if (scanner.hasNext()) {
+                throw new IllegalArgumentException("输入数据过多，请重新输入");
+            }
+
+            this.n = n;
+            coefficientMatrix = new ArrayList<>(tempCoefficientMatrix);
+            a4_5.append("增广矩阵输入成功,内容如下:\n");
+            printCoefficientMatrix();
+        }
+
+        private void printCoefficientMatrix() {
+            if (coefficientMatrix.isEmpty()){
+                throw new IllegalArgumentException("请先输入增广矩阵");
+            }
+            for (List<Double> row : coefficientMatrix) {
+                for (Double coefficient : row) {
+                    a4_5.append(String.format("%-10f ",coefficient));
+                }
+                a4_5.append("\n");
+            }
+        }
+
+        public void calculate(){
+            if (coefficientMatrix.isEmpty()){
+                throw new IllegalArgumentException("请先输入增广矩阵");
+            }
+
+            List<List<Double>> tempCoefficientMatrix = new ArrayList<>();
+            for (List<Double> innerList : coefficientMatrix) {
+                List<Double> innerCopy = new ArrayList<>(innerList);
+                tempCoefficientMatrix.add(innerCopy);
+            }
+            a4_5.append("开始计算...\n");
+            //有n-1行,n列
+            for (int i = 0; i < n; i++)
+            {
+                //判断是否非奇异矩阵
+                if (tempCoefficientMatrix.get(i).get(i) == 0) {
+                    a4_5.append("该矩阵为奇异矩阵，暂时无法求解\n");
+                    throw new IllegalArgumentException("求解失败");
+                }
+                //处理第i一行
+                for (int j = i+1; j <= n; ++j) {
+                    tempCoefficientMatrix.get(i).set(j,(tempCoefficientMatrix.get(i).get(j)/tempCoefficientMatrix.get(i).get(i)));
+                }
+                tempCoefficientMatrix.get(i).set(i,1.0);
+                //处理下面每一行
+                for (int i2 = i+1; i2 < n; ++i2) {
+                    double kl = tempCoefficientMatrix.get(i2).get(i);
+                    for (int j2 = i; j2 <= n; ++j2) {
+                        tempCoefficientMatrix.get(i2).set(j2,(tempCoefficientMatrix.get(i2).get(j2)-tempCoefficientMatrix.get(i).get(j2)*kl));
+                    }
+                }
+            }
+            //判断是否为有唯一解，否则返回错误
+            if (tempCoefficientMatrix.get(n-1).get(n-1) == 0){
+                a4_5.append("该矩阵有无穷解，暂时无法求解\n");
+                throw new IllegalArgumentException("求解失败");
+            }
+            //回代求解
+            for (int j = n-1; j >= 0; --j) {
+                for (int i = j-1; i>=0 ; --i) {
+                    //处理b矩阵
+                    tempCoefficientMatrix.get(i).set(n,(tempCoefficientMatrix.get(i).get(n)-(tempCoefficientMatrix.get(j).get(n)*tempCoefficientMatrix.get(i).get(j)/tempCoefficientMatrix.get(j).get(j))));
+                    tempCoefficientMatrix.get(i).set(j,0.0);
+                }
+            }
+            a4_5.append("计算结束，方程组的解为:\n");
+            for (int i = 0; i < n; i++) {
+                a4_5.append(String.format("x%d=%f\n",i+1,tempCoefficientMatrix.get(i).get(n)));
+            }
+            permanentUpdateBottomInfo("就绪",smallReadyPNG,readyColor);
+        }
+    }
+    //列主元高斯消去
+    class MainGauss{
+        //        4 -1 0 -1 0 0 0
+//        -1 4 -1 0 -1 0 5
+//        0 -1 4 0 0 -1 0
+//        -1 0 0 4 -1 0 6
+//        0 -1 0 -1 4 -1 -2
+//        0 0 -1 0 -1 4 6
+        private List<List<Double>> coefficientMatrix;//增广矩阵
+        private int n;//未知数个数
+        public MainGauss() {
+            coefficientMatrix = new ArrayList<>();
+        }
+        public void inputCoefficientMatrix(int n,String matrix){
+            List<List<Double>> tempCoefficientMatrix = new ArrayList<>();
+            Scanner scanner = new Scanner(matrix);
+            // 逐行读取输入的系数
+            for (int i = 0; i < n; i++) {
+                List<Double> row = new ArrayList<>();
+                // 逐列读取系数
+                for (int j = 0; j <= n; j++) {
+                    if (scanner.hasNextDouble()) {
+                        row.add(scanner.nextDouble());
+                    } else {
+                        throw new IllegalArgumentException("输入数据不足或过多，构建失败，请重新输入");
+                    }
+                }
+                tempCoefficientMatrix.add(row);
+            }
+
+            // 检查是否还有多余的输入数据
+            if (scanner.hasNext()) {
+                throw new IllegalArgumentException("输入数据过多，请重新输入");
+            }
+
+            this.n = n;
+            coefficientMatrix = new ArrayList<>(tempCoefficientMatrix);
+            a4_6.append("增广矩阵输入成功,内容如下:\n");
+            printCoefficientMatrix();
+        }
+
+        private void printCoefficientMatrix() {
+            if (coefficientMatrix.isEmpty()){
+                throw new IllegalArgumentException("请先输入增广矩阵");
+            }
+            for (List<Double> row : coefficientMatrix) {
+                for (Double coefficient : row) {
+                    a4_6.append(String.format("%-10f ",coefficient));
+                }
+                a4_6.append("\n");
+            }
+        }
+
+        public void calculate() {
+            if (coefficientMatrix.isEmpty()){
+                throw new IllegalArgumentException("请先输入增广矩阵");
+            }
+            List<List<Double>> tempCoefficientMatrix = new ArrayList<>();
+            for (List<Double> innerList : coefficientMatrix) {
+                List<Double> innerCopy = new ArrayList<>(innerList);
+                tempCoefficientMatrix.add(innerCopy);
+            }
+            a4_6.append("开始计算...\n");
+            //有n-1行,n列
+            for (int i = 0; i < n; i++)
+            {
+                //判断是否非奇异矩阵
+                if (tempCoefficientMatrix.get(i).get(i) == 0) {
+                    a4_6.append("该矩阵为奇异矩阵，暂时无法求解\n");
+                    throw new IllegalArgumentException("求解失败");
+                }
+                //处理第i行一行
+                for (int j = i+1; j <= n; ++j) {
+                    tempCoefficientMatrix.get(i).set(j,(tempCoefficientMatrix.get(i).get(j)/tempCoefficientMatrix.get(i).get(i)));
+                }
+                tempCoefficientMatrix.get(i).set(i,1.0);
+                //交换
+                int maxI = i+1;
+                for (int i2 = maxI+1; i2 < n; ++i2) {
+                    if (tempCoefficientMatrix.get(i2).get(i)>tempCoefficientMatrix.get(maxI).get(i)){
+                        maxI = i2;
+                    }
+                }
+                if (maxI!=(i+1)){
+                    List<Double> tempList = tempCoefficientMatrix.get(maxI);
+                    tempCoefficientMatrix.set(maxI,tempCoefficientMatrix.get(i+1));
+                    tempCoefficientMatrix.set(i+1,tempList);
+                }
+                //处理下面每一行
+                for (int i2 = i+1; i2 < n; ++i2) {
+                    double kl = tempCoefficientMatrix.get(i2).get(i);
+                    for (int j2 = i; j2 <= n; ++j2) {
+                        tempCoefficientMatrix.get(i2).set(j2,(tempCoefficientMatrix.get(i2).get(j2)-tempCoefficientMatrix.get(i).get(j2)*kl));
+                    }
+                }
+            }
+            //判断是否为有唯一解，否则返回错误
+            if (tempCoefficientMatrix.get(n-1).get(n-1) == 0){
+                a4_6.append("该矩阵有无穷解，暂时无法求解\n");
+                throw new IllegalArgumentException("求解失败");
+            }
+            //回代求解
+            for (int j = n-1; j >= 0; --j) {
+                for (int i = j-1; i>=0 ; --i) {
+                    //处理b矩阵
+                    tempCoefficientMatrix.get(i).set(n,(tempCoefficientMatrix.get(i).get(n)-(tempCoefficientMatrix.get(j).get(n)*tempCoefficientMatrix.get(i).get(j)/tempCoefficientMatrix.get(j).get(j))));
+                    tempCoefficientMatrix.get(i).set(j,0.0);
+                }
+            }
+            a4_6.append("计算结束，方程组的解为:\n");
+            for (int i = 0; i < n; i++) {
+                a4_6.append(String.format("x%d=%f\n",i+1,tempCoefficientMatrix.get(i).get(n)));
+            }
+            permanentUpdateBottomInfo("就绪",smallReadyPNG,readyColor);
         }
     }
 
